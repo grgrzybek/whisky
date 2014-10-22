@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<blueprint 
+	xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:cxf="http://cxf.apache.org/blueprint/core" 
+	xmlns:ccxf="http://camel.apache.org/schema/blueprint/cxf"
+	xsi:schemaLocation="
+				http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+      			http://cxf.apache.org/blueprint/core http://cxf.apache.org/schemas/blueprint/core.xsd
+      			">
+	<!-- Reference the Curator client -->
+	<reference id="curator" interface="org.apache.curator.framework.CuratorFramework" />
+	
+	<!-- Configure the Fabric load balancer feature -->
+    <bean id="fabricLoadBalancerFeature" class="io.fabric8.cxf.FabricLoadBalancerFeature">
+        <property name="curator" ref="curator" />
+        <property name="fabricPath" value="/fabric/cxf/endpoints" />
+    </bean>
+
+	<cxf:bus>
+		<cxf:features>
+			<!--<cxf:logging/> -->
+			<ref component-id="fabricLoadBalancerFeature"/>
+		</cxf:features>
+	</cxf:bus>
+
+	<bean id="srvJsonProvider" class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
+		<property name="dropRootElement" value="true" />
+		<property name="dropCollectionWrapperElement" value="true" />
+		<property name="ignoreNamespaces" value="true" />
+	</bean>
+
+	<bean id="priceJsonProvider" class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
+		<property name="inTransformElements">
+			<map>
+				<entry key="*" value="{http://whisky.roeland.org/price}*" />
+			</map>
+		</property>
+	</bean>
+
+	<ccxf:rsServer id="rsServer" address="/wdata" serviceClass="org.roeland.whisky.wdata.Service"
+		loggingFeatureEnabled="false" loggingSizeLimit="20">
+		<ccxf:features>
+			<ref component-id="fabricLoadBalancerFeature"/>
+		</ccxf:features>
+		<ccxf:providers>
+			<ref component-id="srvJsonProvider" />
+		</ccxf:providers>
+	</ccxf:rsServer>
+
+	<ccxf:rsClient id="restSvcBottlePrice" address="http://dummyaddress" serviceClass="org.roeland.whisky.wdata.RemoteWhiskyPriceService"
+		loggingFeatureEnabled="false">
+		<ccxf:features>
+			<ref component-id="fabricLoadBalancerFeature"/>
+		</ccxf:features>
+		<ccxf:providers>
+			<ref component-id="priceJsonProvider" />
+		</ccxf:providers>
+	</ccxf:rsClient>
+
+	<ccxf:rsClient id="restSvcBottleName" address="http://dummyaddress" serviceClass="org.roeland.whisky.wdata.RemoteWhiskyNameService"
+		loggingFeatureEnabled="false">
+		<ccxf:features>
+			<ref component-id="fabricLoadBalancerFeature"/>
+		</ccxf:features>
+	</ccxf:rsClient>
+
+	<bean id="serviceResponse" class="org.roeland.whisky.wdata.BottleReply" />
+
+	<bean id="aggregateNameInData" class="org.roeland.whisky.wdata.AggregateNameInData" />
+	<bean id="aggregatePriceInData" class="org.roeland.whisky.wdata.AggregatePriceInData" />
+
+	<bean id="gson" class="org.apache.camel.component.gson.GsonDataFormat">
+		<property name="unmarshalType" value="org.roeland.whisky.wdata.remote.WhiskyPrice" />
+	</bean>
+
+	<camelContext id="camel" xmlns="http://camel.apache.org/schema/blueprint">
+		<route>
+			<from uri="cxfrs:bean:rsServer?bindingStyle=SimpleConsumer" />
+
+			<setHeader headerName="bottleId">
+				<simple>${body}</simple>
+			</setHeader>
+
+			<setBody>
+				<simple>ref:serviceResponse</simple>
+			</setBody>
+
+			<to uri="bean:serviceResponse?method=setId(header.bottleId)" />
+
+			<enrich uri="direct:wname" strategyRef="aggregateNameInData" />
+			<enrich uri="direct:wprice" strategyRef="aggregatePriceInData" />
+		</route>
+
+		<route>
+			<from uri="direct:wname" />
+
+			<setBody>
+				<simple>${in.header.bottleId}</simple>
+			</setBody>
+			<removeHeaders pattern="*" />
+			<setHeader headerName="OperationName">
+				<constant>getName</constant>
+			</setHeader>
+			<setHeader headerName="CamelCxfRsUsingHttpAPI">
+				<constant>false</constant>
+			</setHeader>
+			<setHeader headerName="bottleId">
+				<simple>${body}</simple>
+			</setHeader>
+
+			<to uri="cxfrs:bean:restSvcBottleName" />
+		</route>
+
+		<route>
+			<from uri="direct:wprice" />
+
+			<setBody>
+				<simple>${in.header.bottleId}</simple>
+			</setBody>
+			<removeHeaders pattern="*" />
+			<setHeader headerName="OperationName">
+				<constant>getPrice</constant>
+			</setHeader>
+			<setHeader headerName="CamelCxfRsUsingHttpAPI">
+				<constant>false</constant>
+			</setHeader>
+			<setHeader headerName="bottleId">
+				<simple>${body}</simple>
+			</setHeader>
+
+			<to uri="cxfrs:bean:restSvcBottlePrice" />
+		</route>
+	</camelContext>
+
+</blueprint>

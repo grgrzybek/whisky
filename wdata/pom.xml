@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<artifactId>org.roeland.whisky.parent</artifactId>
+		<groupId>org.roeland.whisky</groupId>
+		<version>1.0</version>
+	</parent>
+
+	<artifactId>wdata</artifactId>
+	<packaging>bundle</packaging>
+	<version>1.0-SNAPSHOT</version>
+
+	<name>Whisky Data Service</name>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-bundle</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.wordnik</groupId>
+			<artifactId>swagger-jaxrs_2.10</artifactId>
+			<version>1.3.0</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>commons-httpclient</groupId>
+			<artifactId>commons-httpclient</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+
+				<configuration>
+					<instructions>
+						<Bundle-SymbolicName>org.roeland.whisky.wdata</Bundle-SymbolicName>
+						<Private-Package>org.roeland.whisky.wdata.*</Private-Package>
+						<Import-Package>
+							javax.ws.rs,
+							javax.ws.rs.core,
+							javax.xml.bind.annotation,
+							org.osgi.service.blueprint,
+							org.codehaus.jettison.mapped,
+							com.wordnik.swagger.jaxrs.config,
+							com.wordnik.swagger.jaxrs.listing,
+							com.wordnik.swagger.annotations,
+							com.fasterxml.jackson.annotation,
+							com.fasterxml.jackson.core,
+							com.fasterxml.jackson.databind,
+							com.fasterxml.jackson.jaxrs.json,
+							javax.ws.rs.ext,
+							io.fabric8.cxf,
+							*
+						</Import-Package>
+					</instructions>
+				</configuration>
+			</plugin>
+
+			<!-- to generate the MANIFEST-FILE of the bundle -->
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<version>2.3.7</version>
+				<extensions>true</extensions>
+			</plugin>
+
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-artifacts</id>
+						<phase>package</phase>
+						<goals>
+							<goal>attach-artifact</goal>
+						</goals>
+						<configuration>
+							<artifacts>
+								<artifact>
+									<file>target/classes/features.xml</file>
+									<type>xml</type>
+									<classifier>features</classifier>
+								</artifact>
+							</artifacts>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>jaxb2-maven-plugin</artifactId>
+				<version>1.6</version>
+				<executions>
+					<execution>
+						<id>step-1</id>
+						<goals>
+							<goal>xjc</goal>
+						</goals>
+						<configuration>
+							<extension>true</extension>
+							<arguments>-Xannotate</arguments>
+
+							<outputDirectory>target/generated/main/java</outputDirectory>
+							<packageName>org.roeland.whisky.wdata.remote</packageName>
+							<schemaDirectory>src/schema/xsd</schemaDirectory>
+							<bindingDirectory>src/schema/bindings</bindingDirectory>
+						</configuration>
+					</execution>
+				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>org.jvnet.jaxb2_commons</groupId>
+						<artifactId>jaxb2-basics-annotate</artifactId>
+						<version>0.6.5</version>
+					</dependency>
+					<dependency>
+						<groupId>com.sun.codemodel</groupId>
+						<artifactId>codemodel</artifactId>
+						<version>2.6</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+
+
+		</plugins>
+	</build>
+
+</project>
