@@ -15,7 +15,7 @@
 	<!-- Configure the Fabric load balancer feature -->
     <bean id="fabricLoadBalancerFeature" class="io.fabric8.cxf.FabricLoadBalancerFeature">
         <property name="curator" ref="curator" />
-        <property name="fabricPath" value="/fabric/cxf/endpoints" />
+        <property name="fabricPath" value="cxf/endpoints" />
     </bean>
 
 	<cxf:bus>
