@@ -37,7 +37,12 @@
 	<!-- Configure the Fabric load balancer feature -->
     <bean id="fabricLoadBalancerFeature" class="io.fabric8.cxf.FabricLoadBalancerFeature">
         <property name="curator" ref="curator" />
-        <property name="fabricPath" value="cxf/endpoints" />
+        <property name="fabricPath" value="wname" />
+		<property name="addressResolver">
+			<bean class="io.fabric8.cxf.PrefixAddressResolver">
+				<property name="prefixAddress" value="http://everfree.forest:8182/cxf" />
+			</bean>
+		</property>
     </bean>
 
 	<cxf:bus>

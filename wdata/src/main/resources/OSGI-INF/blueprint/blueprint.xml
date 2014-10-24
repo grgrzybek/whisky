@@ -15,15 +15,38 @@
 	<!-- Configure the Fabric load balancer feature -->
     <bean id="fabricLoadBalancerFeature" class="io.fabric8.cxf.FabricLoadBalancerFeature">
         <property name="curator" ref="curator" />
-        <property name="fabricPath" value="cxf/endpoints" />
+        <property name="fabricPath" value="wdata" />
+		<property name="addressResolver">
+			<bean class="io.fabric8.cxf.PrefixAddressResolver">
+				<property name="prefixAddress" value="http://everfree.forest:8182/cxf" />
+			</bean>
+		</property>
+    </bean>
+    <bean id="wnameFabricLoadBalancerFeature" class="io.fabric8.cxf.FabricLoadBalancerFeature">
+        <property name="curator" ref="curator" />
+        <property name="fabricPath" value="wname" />
+		<property name="addressResolver">
+			<bean class="io.fabric8.cxf.PrefixAddressResolver">
+				<property name="prefixAddress" value="http://everfree.forest:8182/cxf" />
+			</bean>
+		</property>
+    </bean>
+    <bean id="wpriceFabricLoadBalancerFeature" class="io.fabric8.cxf.FabricLoadBalancerFeature">
+        <property name="curator" ref="curator" />
+        <property name="fabricPath" value="wprice" />
+		<property name="addressResolver">
+			<bean class="io.fabric8.cxf.PrefixAddressResolver">
+				<property name="prefixAddress" value="http://everfree.forest:8182/cxf" />
+			</bean>
+		</property>
     </bean>
 
-	<cxf:bus>
-		<cxf:features>
+	<!--<cxf:bus>-->
+		<!--<cxf:features>-->
 			<!--<cxf:logging/> -->
-			<ref component-id="fabricLoadBalancerFeature"/>
-		</cxf:features>
-	</cxf:bus>
+			<!--<ref component-id="fabricLoadBalancerFeature"/>-->
+		<!--</cxf:features>-->
+	<!--</cxf:bus>-->
 
 	<bean id="srvJsonProvider" class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
 		<property name="dropRootElement" value="true" />
@@ -52,7 +75,7 @@
 	<ccxf:rsClient id="restSvcBottlePrice" address="http://dummyaddress" serviceClass="org.roeland.whisky.wdata.RemoteWhiskyPriceService"
 		loggingFeatureEnabled="false">
 		<ccxf:features>
-			<ref component-id="fabricLoadBalancerFeature"/>
+			<ref component-id="wpriceFabricLoadBalancerFeature"/>
 		</ccxf:features>
 		<ccxf:providers>
 			<ref component-id="priceJsonProvider" />
@@ -62,7 +85,7 @@
 	<ccxf:rsClient id="restSvcBottleName" address="http://dummyaddress" serviceClass="org.roeland.whisky.wdata.RemoteWhiskyNameService"
 		loggingFeatureEnabled="false">
 		<ccxf:features>
-			<ref component-id="fabricLoadBalancerFeature"/>
+			<ref component-id="wnameFabricLoadBalancerFeature"/>
 		</ccxf:features>
 	</ccxf:rsClient>
 
